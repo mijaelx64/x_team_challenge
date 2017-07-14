@@ -6,8 +6,8 @@ var path = require('path')
  *
  * (string): string
  */
-function encode (data) {
-  return (new Buffer(data)).toString('base64')
+function encode(data) {
+    return (new Buffer(data)).toString('base64')
 }
 
 /**
@@ -15,17 +15,17 @@ function encode (data) {
  *
  * (string): string
  */
-function decode (data) {
-  return (new Buffer('' + data, 'base64')).toString()
+function decode(data) {
+    return (new Buffer('' + data, 'base64')).toString()
 }
 
 /**
  * Encode a superhero name
  *
  * (string): string
-*/
-module.exports.encodeName = function (name) {
-  return encode('@' + name)
+ */
+module.exports.encodeName = function(name) {
+    return encode('@' + name)
 }
 
 /**
@@ -33,19 +33,19 @@ module.exports.encodeName = function (name) {
  *
  * (string, (?Error, ?Object))
  */
-module.exports.loadDb = function (dbFile, cb) {
-  fs.readFile(dbFile, function (err, res) {
-    if (err) { return cb(err) }
+module.exports.loadDb = function(dbFile, cb) {
+    fs.readFile(dbFile, function(err, res) {
+        if (err) { return cb(err) }
 
-    var messages
-    try {
-      messages = JSON.parse(res)
-    } catch (e) {
-      return cb(err)
-    }
+        var messages
+        try {
+            messages = JSON.parse(res)
+        } catch (e) {
+            return cb(err)
+        }
 
-    return cb(null, { file: dbFile, messages: messages })
-  })
+        return cb(null, { file: dbFile, messages: messages })
+    })
 }
 
 /**
@@ -53,20 +53,27 @@ module.exports.loadDb = function (dbFile, cb) {
  *
  * (Object, string): Object
  */
-module.exports.findInbox = function (db, encodedName) {
-  var messages = db.messages
-  return {
-    dir: path.dirname(db.file),
-    messages: Object.keys(messages).reduce(function (acc, key) {
-      if (messages[key].to === encodedName) {
-        return acc.concat({
-          hash: key,
-          lastHash: messages[key].last,
-          from: messages[key].from
-        })
-      } else { return acc }
-    }, [])
-  }
+module.exports.findInbox = function(db, encodedName) {
+    var messages = db.messages
+
+    //console.log(messages);
+
+    //console.log(encodedName);
+
+    return {
+        dir: path.dirname(db.file),
+        messages: Object.keys(messages).reduce(function(acc, key) {
+            //console.log("==============");
+            //console.log(key);
+            if (messages[key].to === encodedName) {
+                return acc.concat({
+                    hash: key,
+                    lastHash: messages[key].last,
+                    from: messages[key].from
+                })
+            } else { return acc }
+        }, [])
+    }
 }
 
 /**
@@ -74,17 +81,30 @@ module.exports.findInbox = function (db, encodedName) {
  *
  * ({ messages: Array<Object> }, string): string
  */
-module.exports.findNextMessage = function (inbox, lastHash) {
-  // find the message which comes after lastHash
-  var found
-  for (var i = 0; i < inbox.messages.length; i += 1) {
-    if (inbox.messages[i].lastHash === lastHash) {
-      found = i
-      break
-    }
-  }
+module.exports.findNextMessage = function(inbox, lastHash) {
+    // find the message which comes after lastHash
+    var found
 
-  // read and decode the message
-  return 'from: ' + decode(inbox.messages[found].from) + '\n---\n' +
-    decode(fs.readFile(path.join(inbox.dir, inbox.messages[found].hash), 'utf8'))
+
+
+    for (var i = 0; i < inbox.messages.length; i += 1) {
+        if (inbox.messages[i].lastHash === lastHash) {
+            found = i
+            break
+        }
+    }
+
+    //var aux = fs.readFile(path.join(inbox.dir, inbox.messages[found].hash), 'utf8');
+    //var aux = path.join(inbox.dir, inbox.messages[found].hash);
+    console.log("====");
+    var aux = fs.readFileSync(path.join(inbox.dir, inbox.messages[found].hash)).toString();
+
+    console.log(aux);
+    console.log("====");
+
+
+    // read and decode the message
+    return 'from: ' + decode(inbox.messages[found].from) + '\n---\n' +
+        //decode(fs.readFile(path.join(inbox.dir, inbox.messages[found].hash), 'utf8'));
+        decode(fs.readFileSync(path.join(inbox.dir, inbox.messages[found].hash)).toString());
 }
